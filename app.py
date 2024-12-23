@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
 import os
+from googleapiclient.errors import HttpError
 
 # Configuration
 app = Flask(__name__)
@@ -10,7 +12,7 @@ scope = ['https://www.googleapis.com/auth/spreadsheets',
 # Identifiants Google Sheets
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '1SQM-LgJnOTAmovr6hjMVFJaxq8B6gLgiOohxK3LBgGE'  # Remplacez par l'ID de votre Google Sheet
-RANGE_NAME = 'Paiements'  # Changez en fonction de votre feuille et de la plage voulue
+RANGE_NAME = 'Paiements!A1:Z1'  # Changez en fonction de votre feuille et de la plage voulue
 
 # Charger les variables d'environnement
 TYPE = os.environ.get("TYPE")
