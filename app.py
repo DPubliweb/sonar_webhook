@@ -1,10 +1,7 @@
 from flask import Flask, request, jsonify
-import google.auth
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from google.oauth2.service_account import Credentials
 import os
-from oauth2client.service_account import ServiceAccountCredentials
 
 # Configuration
 app = Flask(__name__)
