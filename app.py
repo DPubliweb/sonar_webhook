@@ -15,10 +15,13 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '1SQM-LgJnOTAmovr6hjMVFJaxq8B6gLgiOohxK3LBgGE'  # Remplacez par l'ID de votre Google Sheet
 RANGE_NAME = 'Paiements!A1:Z1'  # Changez en fonction de votre feuille et de la plage voulue
 
-# Configurer les logs
-logging.basicConfig(level=logging.INFO)
+# Configurer les logs pour afficher tous les niveaux
+logging.basicConfig(
+    level=logging.INFO,  # Affiche les messages de niveau INFO et supérieur
+    format='[%(asctime)s] - %(levelname)s - %(message)s',  # Format des logs
+    datefmt='%Y-%m-%d %H:%M:%S'  # Format de la date
+)
 logger = logging.getLogger(__name__)
-
 # Charger les variables d'environnement
 TYPE = os.environ.get("TYPE")
 PROJECT_ID = os.environ.get("PROJECT_ID")
