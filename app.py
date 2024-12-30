@@ -1,10 +1,10 @@
+import logging
 from flask import Flask, request, jsonify
 from googleapiclient.discovery import build
 from google.oauth2.service_account import Credentials
 from oauth2client.service_account import ServiceAccountCredentials
 import os
 from googleapiclient.errors import HttpError
-import logging
 
 # Configuration
 app = Flask(__name__)
@@ -15,13 +15,10 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 SPREADSHEET_ID = '1SQM-LgJnOTAmovr6hjMVFJaxq8B6gLgiOohxK3LBgGE'  # Remplacez par l'ID de votre Google Sheet
 RANGE_NAME = 'Paiements!A1:Z1'  # Changez en fonction de votre feuille et de la plage voulue
 
-# Configurer les logs pour afficher tous les niveaux
-logging.basicConfig(
-    level=logging.INFO,  # Affiche les messages de niveau INFO et supérieur
-    format='[%(asctime)s] - %(levelname)s - %(message)s',  # Format des logs
-    datefmt='%Y-%m-%d %H:%M:%S'  # Format de la date
-)
+# Configurez le logger
+logging.basicConfig(level=logging.DEBUG)  # Niveau de log DEBUG pour capturer plus d'informations
 logger = logging.getLogger(__name__)
+
 # Charger les variables d'environnement
 TYPE = os.environ.get("TYPE")
 PROJECT_ID = os.environ.get("PROJECT_ID")
@@ -53,14 +50,13 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict({
 def webhook():
     # Récupération des paramètres de la requête
     data = request.args
-    logger.info("Requête reçue : %s", data)
+    print(f"Webhook reçu : {data}")  # Afficher les détails du webhook dans la console
+    logger.debug(f"Requête reçue : {data}")  # Log de la requête
 
     try:
         # Extraire les données de la requête
         client_fullname = data.get('client_fullname', '').title()
         trans_amount = data.get('trans_amount')
-        logger.info("Nom complet transformé : %s", client_fullname)
-        logger.info("Montant de la transaction : %s", trans_amount)
 
         # Déterminer la valeur correspondante pour trans_amount
         pack_name = ''
@@ -72,9 +68,8 @@ def webhook():
             pack_name = 'Pack Protection & Résonance'
         else:
             pack_name = 'Autre Pack'
-        logger.info("Pack correspondant : %s", pack_name)
 
-        # Préparer les données pour Google Sheets
+        # Extraire les données de la requête
         row_data = [
             data.get('trans_date'),
             client_fullname,
@@ -85,7 +80,8 @@ def webhook():
             data.get('reply_desc'),
             data.get('trans_id')
         ]
-        logger.info("Données préparées pour Google Sheets : %s", row_data)
+
+        logger.debug(f"Données à insérer : {row_data}")  # Log des données extraites
 
         # Ajouter les données dans le Google Sheet
         service = build('sheets', 'v4', credentials=creds)
@@ -93,7 +89,6 @@ def webhook():
         body = {
             'values': [row_data]
         }
-        logger.info("Ajout des données au Google Sheet...")
         result = sheet.values().append(
             spreadsheetId=SPREADSHEET_ID,
             range=RANGE_NAME,
@@ -101,17 +96,14 @@ def webhook():
             body=body
         ).execute()
 
-        logger.info("Mise à jour réussie : %s cellules mises à jour", result.get('updates').get('updatedCells'))
-        return jsonify({'status': 'success', 'updated_cells': result.get('updates').get('updatedCells')})
-    except HttpError as error:
-        logger.error("Erreur Google Sheets : %s", str(error))
-        return jsonify({'status': 'error', 'message': str(error)}), 500
-    except Exception as e:
-        logger.error("Erreur générale : %s", str(e))
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        logger.info(f"Cellules mises à jour : {result.get('updates').get('updatedCells')}")  # Log du résultat de l'insertion
 
+        return jsonify({'status': 'success', 'updated_cells': result.get('updates').get('updatedCells')})
+
+    except HttpError as error:
+        logger.error(f"Erreur HTTP lors de l'accès au Google Sheets : {error}")  # Log de l'erreur
+        return jsonify({'status': 'error', 'message': str(error)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8002))  # Port dynamique pour Qoddi
-    logger.info("Application démarrée sur le port %s", port)
     app.run(host='0.0.0.0', port=port)
