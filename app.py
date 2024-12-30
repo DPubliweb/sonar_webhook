@@ -45,11 +45,14 @@ creds = ServiceAccountCredentials.from_json_keyfile_dict({
     "client_x509_cert_url": CLIENT_X509_CERT_URL
 }, scope)
 
-# Webhook
-@app.route('/webhook', methods=['GET'])
+@app.route('/webhook', methods=['POST', 'GET'])  # Accepter POST et GET si nécessaire
 def webhook():
     # Récupération des paramètres de la requête
-    data = request.args
+    if request.method == 'POST':
+        data = request.form
+    else:
+        data = request.args
+
     print(f"Webhook reçu : {data}")  # Afficher les détails du webhook dans la console
     logger.debug(f"Requête reçue : {data}")  # Log de la requête
 
